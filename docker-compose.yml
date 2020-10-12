@@ -3,6 +3,7 @@ services:
 
   # DATABASE
   mysql:
+    container_name: mc4nd_mysql
     image: mariadb:latest
     command: --max_allowed_packet=256M
     volumes:
@@ -15,6 +16,7 @@ services:
       MYSQL_USER: main
       MYSQL_PASSWORD: password
   postgresql:
+    container_name: mc4nd_pgsql
     image: bitnami/postgresql:latest
     environment:
       POSTGRESQL_DATABASE: maindb
@@ -25,6 +27,7 @@ services:
     ports:
       - 5432:5432
   mongodb_container:
+    container_name: mc4nd_mongodb
     image: mongo:latest
     environment:
       MONGO_INITDB_ROOT_USERNAME: main
@@ -34,6 +37,7 @@ services:
     volumes:
       - ./data/mongod:/data/db
   redis:
+    container_name: mc4nd_redis
     image: bitnami/redis:latest
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
@@ -43,9 +47,22 @@ services:
       - 6379:6379
     volumes:
       - ./data/redis:/bitnami/redis/data
+  sqlite3:
+    container_name: mc4nd_sqlite3
+    image: nouchka/sqlite3:latest
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./data/sqlite3:/root/db/
+  memcached:
+    container_name: mc4nd_memcached
+    image: bitnami/memcached:latest
+    ports:
+      - 11211:11211
 
   # WEBSERVER
   litespeed:
+    container_name: mc4nd_openlitespeed
     image: litespeedtech/openlitespeed:latest
     volumes:
         - ./lsws/conf:/usr/local/lsws/conf
@@ -55,9 +72,8 @@ services:
         - ./lsws/acme:/root/.acme.sh/
         - ./lsws/logs:/usr/local/lsws/logs/
     ports:
-      - 80:80
-      - 443:443
-      - 443:443/udp
+      # - 80:80
+      # - 443:443
       - 7080:7080
     restart: always
     environment:
@@ -66,17 +82,35 @@ services:
 
   # PHPMYADMIN
   phpmyadmin:
+    container_name: mc4nd_phpmyadmin
     image: bitnami/phpmyadmin:latest
     ports:
-      - 8080:80
-      - 8443:443
+      - 8080:8080
+      - 8443:8443
     environment:
       DOMAIN: localhost
       DATABASE_HOST: mysql
   phppgadmin:
+    container_name: mc4nd_phppgadmin
     image: bitnami/phppgadmin:latest
     ports:
       - 8081:8080
-      - 8444:443
+      - 8444:8443
     depends_on:
       - postgresql
+
+  # COMPOSER
+  composer:
+    container_name: mc4nd_composer
+    image: composer:latest
+    stdin_open: true
+    tty: true
+    volumes: 
+      - ./data/composer/app:/app
+      - ./data/composer/tmp:/tmp
+      - ./data/composer:/composer
+    depends_on:
+      - litespeed
+
+networks:
+  overlay:
